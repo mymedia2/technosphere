@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gcc format-version="0.1.0">
+	<program-name>xgcc</program-name>
+	<version>6.0.0 (experimental)</version>
+	<parameters>-foutput-format=xml</parameters>
+	...
+	<work-dir>/home/mymedia/техносфера/c++/gcc/build/gcc</work-dir>
+
+	<report>
+		<diagnostic kind="error">
+			<context>In function <primary>main</primary></context>
+			<text>to few arguments to function <primary>foo</primary></text>
+			<sources>
+				<file>
+					<filename>./simple.c</filename>
+					<locations>
+						<mark caret="5,5" />
+					</locations>
+				</file>
+			</sources>
+			<notes>
+				<diagnostic kind="note">
+					<text>declared here</text>
+					<sources>
+						<file>
+							<filename>./simple.c</filename>
+							<locations>
+								<mark caret="1,13" />
+							</locations>
+						</file>
+					</sources>
+				</diagnostic>
+			</notes>
+		</diagnostic>
+
+		<diagnostic kind="error">
+			<included-from>
+				<file>
+					<filename>./header1.h</filename>
+					<locations>
+						<mark caret="4,0" />
+					</locations>
+				</file>
+				<file>
+					<filename>./include.h</filename>
+					<locations>
+						<mark caret="1" />
+					</locations>
+				</file>
+			</included-from>
+			<context>In function <primary>foo</primary></context>
+			<text>invalid operands to binary + (have <primary>char *</primary> and <primary>char *</primary>)</text>
+			<sources>
+				<file>
+					<filename>./header2.h</filename>
+					<locations>
+						<mark caret="10,14" />
+					</locations>
+				</file>
+			</sources>
+		</diagnostic>
+
+		<diagnostic kind="error">
+			<context>In function <primary>foo</primary></context>
+			<text>too few arguments to function <primary>foo</primary></text>
+			<sources>
+				<file>
+					<filename>./macro.c</filename>
+					<locations>
+						<mark caret="3,17" />
+					</locations>
+				</file>
+			</sources>
+			<notes>
+				<diagnostic kind="note">
+					<text>in expansion of macro <primary>FOO</primary></text>
+					<sources>
+						<file>
+							<filename>./macro.c</filename>
+							<locations>
+								<mark caret="4,17" />
+							</locations>
+						</file>
+					</sources>
+				</diagnostic>
+				<diagnostic kind="note">
+					<text>in expansion of macro <primary>BAR</primary></text>
+					<sources>
+						<file>
+							<filename>./macro.c</filename>
+							<locations>
+								<mark caret="5,17" />
+							</locations>
+						</file>
+					</sources>
+				</diagnostic>
+				<diagnostic kind="note">
+					<text>in expansion of macro <primary>BAZ</primary></text>
+					<sources>
+						<file>
+							<filename>./macro.c</filename>
+							<locations>
+								<mark caret="9,5" />
+							</locations>
+						</file>
+					</sources>
+				</diagnostic>
+				<diagnostic kind="note">
+					<text>declared here</text>
+					<sources>
+						<file>
+							<filename>./macro.c</filename>
+							<locations>
+								<mark caret="1,13" />
+							</locations>
+						</file>
+					</sources>
+				</diagnostic>
+			</notes>
+		</diagnostic>
+
+		<diagnostic kind="warning">
+			<context>In function <primary>main</primary></context>
+			<text>format <primary>%f</primary> expects argument of type <primary>double</primary>, but argument 2 has type <primary>int</primary></text>
+			<option>-Wformat=</option>
+			<sources>
+				<file>
+					<filename>./printf.c</filename>
+					<locations>
+						<mark caret="5,29" />
+					</locations>
+				</file>
+			</sources>
+		</diagnostic>
+	</report>
+
+	<syntax-tree>
+		...
+	</syntax-tree>
+</gcc>
