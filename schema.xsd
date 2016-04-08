@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<!-- Description of format structure -->
+	<xs:element name="gcc">
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="program-name" type="xs:string" />
+				<xs:element name="version" type="xs:token" />
+				<xs:element name="parameters" type="xs:string" />
+				<xs:element name="work-dir" type="xs:string" />
+				<xs:element name="report" type="Diagnostics" />
+				<xs:element name="syntax-tree" type="SyntaxTree" />
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- Description of used types -->
+	<xs:complexType name="Diagnostics">
+		<xs:sequence>
+			<xs:element name="diagnostic" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:all>
+						<!-- TODO: глянуть, есть ли аттрибут для задания необязательности элемента -->
+						<xs:element name="included-from" type="Files" minOccurs="0" />
+						<xs:element name="context" type="Text" minOccurs="0" />
+						<xs:element name="text" type="Text" />
+						<xs:element name="option" type="xs:string" minOccurs="0" />
+						<xs:element name="sources" type="Files" />
+						<xs:element name="notes" type="Diagnostics" minOccurs="0" />
+					</xs:all>
+					<!-- Бесит, что аттрибуты нужно указывать в конце -->
+					<xs:attribute name="kind" type="xs:token" use="required" />
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="Files">
+		<xs:sequence>
+			<xs:element name="file" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:all>
+						<xs:element name="filename" type="xs:string" />
+						<xs:element name="locations">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="mark" minOccurs="1" maxOccurs="unbounded">
+										<xs:complexType>
+											<xs:attribute name="caret" type="Position" />
+											<xs:attribute name="start" type="Position" />
+											<xs:attribute name="stop" type="Position" />
+										</xs:complexType>
+									</xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:all>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:simpleType name="Position">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="[1-9][0-9]*(,[1-9][0-9]*)?" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="Text" mixed="true">
+		<xs:sequence>
+			<xs:element name="primary" type="xs:string" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="SyntaxTree">
+		<xs:sequence>
+			<!-- ... -->
+			<xs:any minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

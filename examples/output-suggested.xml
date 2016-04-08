@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<gcc format-version="0.1.0">
+<gcc>
 	<program-name>xgcc</program-name>
 	<version>6.0.0 (experimental)</version>
 	<parameters>-foutput-format=xml</parameters>
-	...
+	<!-- ... -->
 	<work-dir>/home/mymedia/техносфера/c++/gcc/build/gcc</work-dir>
 
 	<report>
@@ -38,7 +38,7 @@
 				<file>
 					<filename>./header1.h</filename>
 					<locations>
-						<mark caret="4,0" />
+						<mark caret="4" />
 					</locations>
 				</file>
 				<file>
@@ -135,6 +135,6 @@
 	</report>
 
 	<syntax-tree>
-		...
+		<!-- ... -->
 	</syntax-tree>
 </gcc>
