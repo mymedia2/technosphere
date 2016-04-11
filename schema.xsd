@@ -228,7 +228,7 @@
       </xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="primary" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="pre" type="xs:string" minOccurs="0" maxOccurs="unbounded">
         <xs:annotation>
           <xs:documentation>
             This tag contains a monospaced text. It can be type name or identifier.

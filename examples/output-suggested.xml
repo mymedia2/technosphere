@@ -11,8 +11,8 @@
 
 	<report>
 		<diagnostic kind="error">
-			<context>In function <primary>main</primary></context>
-			<text>to few arguments to function <primary>foo</primary></text>
+			<context>In function <pre>main</pre></context>
+			<text>to few arguments to function <pre>foo</pre></text>
 			<sources>
 				<file>
 					<filename>./simple.c</filename>
@@ -51,8 +51,8 @@
 					</locations>
 				</file>
 			</includedFrom>
-			<context>In function <primary>foo</primary></context>
-			<text>invalid operands to binary + (have <primary>char *</primary> and <primary>char *</primary>)</text>
+			<context>In function <pre>foo</pre></context>
+			<text>invalid operands to binary + (have <pre>char *</pre> and <pre>char *</pre>)</text>
 			<sources>
 				<file>
 					<filename>./header2.h</filename>
@@ -64,8 +64,8 @@
 		</diagnostic>
 
 		<diagnostic kind="error">
-			<context>In function <primary>foo</primary></context>
-			<text>too few arguments to function <primary>foo</primary></text>
+			<context>In function <pre>foo</pre></context>
+			<text>too few arguments to function <pre>foo</pre></text>
 			<sources>
 				<file>
 					<filename>./macro.c</filename>
@@ -76,7 +76,7 @@
 			</sources>
 			<notes>
 				<diagnostic kind="note">
-					<text>in expansion of macro <primary>FOO</primary></text>
+					<text>in expansion of macro <pre>FOO</pre></text>
 					<sources>
 						<file>
 							<filename>./macro.c</filename>
@@ -87,7 +87,7 @@
 					</sources>
 				</diagnostic>
 				<diagnostic kind="note">
-					<text>in expansion of macro <primary>BAR</primary></text>
+					<text>in expansion of macro <pre>BAR</pre></text>
 					<sources>
 						<file>
 							<filename>./macro.c</filename>
@@ -98,7 +98,7 @@
 					</sources>
 				</diagnostic>
 				<diagnostic kind="note">
-					<text>in expansion of macro <primary>BAZ</primary></text>
+					<text>in expansion of macro <pre>BAZ</pre></text>
 					<sources>
 						<file>
 							<filename>./macro.c</filename>
@@ -123,8 +123,8 @@
 		</diagnostic>
 
 		<diagnostic kind="warning">
-			<context>In function <primary>main</primary></context>
-			<text>format <primary>%f</primary> expects argument of type <primary>double</primary>, but argument 2 has type <primary>int</primary></text>
+			<context>In function <pre>main</pre></context>
+			<text>format <pre>%f</pre> expects argument of type <pre>double</pre>, but argument 2 has type <pre>int</pre></text>
 			<option>-Wformat=</option>
 			<sources>
 				<file>
