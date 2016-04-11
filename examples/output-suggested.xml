@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<gcc>
-	<program-name>xgcc</program-name>
-	<version>6.0.0 (experimental)</version>
-	<parameters>-foutput-format=xml</parameters>
-	<!-- ... -->
-	<work-dir>/home/mymedia/техносфера/c++/gcc/build/gcc</work-dir>
+<gcc xmlns="https://gcc.gnu.org/diagnostics/2016">
+	<meta>
+		<programName>xgcc</programName>
+		<version>6.0.0 (experimental)</version>
+		<parameters>-fdiagnostics-output-format=xml</parameters>
+		<datetime>2016-04-10T21:07:34+03:00</datetime>
+		<!-- ... -->
+		<workDirectory>/home/mymedia/техносфера/c++/gcc/build/gcc</workDirectory>
+	</meta>
 
 	<report>
 		<diagnostic kind="error">
@@ -34,7 +37,7 @@
 		</diagnostic>
 
 		<diagnostic kind="error">
-			<included-from>
+			<includedFrom>
 				<file>
 					<filename>./header1.h</filename>
 					<locations>
@@ -47,7 +50,7 @@
 						<mark caret="1" />
 					</locations>
 				</file>
-			</included-from>
+			</includedFrom>
 			<context>In function <primary>foo</primary></context>
 			<text>invalid operands to binary + (have <primary>char *</primary> and <primary>char *</primary>)</text>
 			<sources>
@@ -134,7 +137,5 @@
 		</diagnostic>
 	</report>
 
-	<syntax-tree>
-		<!-- ... -->
-	</syntax-tree>
+	<status value="errors" />
 </gcc>

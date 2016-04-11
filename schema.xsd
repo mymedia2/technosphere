@@ -1,81 +1,252 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-	<!-- Description of format structure -->
-	<xs:element name="gcc">
-		<xs:complexType>
-			<xs:all>
-				<xs:element name="program-name" type="xs:string" />
-				<xs:element name="version" type="xs:token" />
-				<xs:element name="parameters" type="xs:string" />
-				<xs:element name="work-dir" type="xs:string" />
-				<xs:element name="report" type="Diagnostics" />
-				<xs:element name="syntax-tree" type="SyntaxTree" />
-			</xs:all>
-		</xs:complexType>
-	</xs:element>
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="https://gcc.gnu.org/diagnostics/2016"
+           xmlns="https://gcc.gnu.org/diagnostics/2016"
+           elementFormDefault="qualified">
+  <xs:annotation>
+    <xs:documentation>
+      This schema determines output format of diagnostics when the compiler
+      called with option <pre>-fdagnostics-output-format=xml</pre>.
+    </xs:documentation>
+  </xs:annotation>
 
-	<!-- Description of used types -->
-	<xs:complexType name="Diagnostics">
-		<xs:sequence>
-			<xs:element name="diagnostic" minOccurs="0" maxOccurs="unbounded">
-				<xs:complexType>
-					<xs:all>
-						<!-- TODO: глянуть, есть ли аттрибут для задания необязательности элемента -->
-						<xs:element name="included-from" type="Files" minOccurs="0" />
-						<xs:element name="context" type="Text" minOccurs="0" />
-						<xs:element name="text" type="Text" />
-						<xs:element name="option" type="xs:string" minOccurs="0" />
-						<xs:element name="sources" type="Files" />
-						<xs:element name="notes" type="Diagnostics" minOccurs="0" />
-					</xs:all>
-					<!-- Бесит, что аттрибуты нужно указывать в конце -->
-					<xs:attribute name="kind" type="xs:token" use="required" />
-				</xs:complexType>
-			</xs:element>
-		</xs:sequence>
-	</xs:complexType>
+  <!-- Description of format structure -->
+  <xs:element name="gcc">
+    <xs:annotation>
+      <xs:documentation>
+        The root element with an information about compilation results.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="meta" type="MetaInformation" />
+        <xs:element name="report" type="Diagnostics" />
+        <xs:element name="status" type="Status" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
 
-	<xs:complexType name="Files">
-		<xs:sequence>
-			<xs:element name="file" minOccurs="0" maxOccurs="unbounded">
-				<xs:complexType>
-					<xs:all>
-						<xs:element name="filename" type="xs:string" />
-						<xs:element name="locations">
-							<xs:complexType>
-								<xs:sequence>
-									<xs:element name="mark" minOccurs="1" maxOccurs="unbounded">
-										<xs:complexType>
-											<xs:attribute name="caret" type="Position" />
-											<xs:attribute name="start" type="Position" />
-											<xs:attribute name="stop" type="Position" />
-										</xs:complexType>
-									</xs:element>
-								</xs:sequence>
-							</xs:complexType>
-						</xs:element>
-					</xs:all>
-				</xs:complexType>
-			</xs:element>
-		</xs:sequence>
-	</xs:complexType>
+  <!-- Description of used types -->
+  <xs:complexType name="MetaInformation">
+    <xs:all>
+      <xs:annotation>
+        <xs:documentation>
+          This elements group describes a general information about the
+          compilation process.
+        </xs:documentation>
+      </xs:annotation>
+      <xs:element name="programName" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            The name of executable file of compiler.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="version" type="xs:token">
+        <xs:annotation>
+          <xs:documentation>
+            The version of compiler which produced the output.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="parameters" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Command line parameters of the compiler that has been run.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="datetime" type="xs:dateTime">
+        <xs:annotation>
+          <xs:documentation>
+            The date and time of compilation.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="workDirectory" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            The work directory where the compiler has been run. All relative
+            paths are determined with relation this directory.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
 
-	<xs:simpleType name="Position">
-		<xs:restriction base="xs:string">
-			<xs:pattern value="[1-9][0-9]*(,[1-9][0-9]*)?" />
-		</xs:restriction>
-	</xs:simpleType>
+  <xs:complexType name="Diagnostics">
+    <xs:sequence>
+      <xs:element name="diagnostic" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            Descibes one diagnostic.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:all>
+            <xs:element name="includedFrom" type="Files" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>
+                  Includes trace...
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="context" type="Text" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>
+                  The additional information about site of error.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="text" type="Text">
+              <xs:annotation>
+                <xs:documentation>
+                  The main text description of diagnostic.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="option" type="xs:string" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>
+                  The option, due to which the diagnosis has been printed.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="sources" type="Files">
+              <xs:annotation>
+                <xs:documentation>
+                  The list of files where was detected error. Also it contains
+                  marks of positions in these files.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="notes" type="Diagnostics" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>
+                  Notes associated with the diagnostic. They can have arbitrary
+                  nesting.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:all>
+          <!-- Annoying that attributes must be below of elements list -->
+          <xs:attribute name="kind" type="xs:token" use="required">
+            <xs:annotation>
+              <xs:documentation>
+                Type of diagnostic.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
 
-	<xs:complexType name="Text" mixed="true">
-		<xs:sequence>
-			<xs:element name="primary" type="xs:string" minOccurs="0" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
+  <xs:complexType name="Files">
+    <xs:sequence>
+      <xs:element name="file" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            The information about position of diagnostic message in the code.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:all>
+            <xs:element name="filename" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>
+                  The name of file. It can be relative. To find out the
+                  absolute path, use the tag <pre>workDirectory</pre>.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="locations">
+              <xs:annotation>
+                <xs:documentation>
+                  Pointers to incorrect sites.
+                </xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                <xs:sequence>
+                  <xs:element name="mark" minOccurs="1" maxOccurs="unbounded">
+                    <xs:annotation>
+                      <xs:documentation>
+                        ...
+                      </xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                      <xs:attribute name="caret" type="Position">
+                        <xs:annotation>
+                          <xs:documentation>
+                            The position of caret mark.
+                          </xs:documentation>
+                        </xs:annotation>
+                      </xs:attribute>
+                      <xs:attribute name="start" type="Position">
+                        <xs:annotation>
+                          <xs:documentation>
+                            The starting position of the emphasis.
+                          </xs:documentation>
+                        </xs:annotation>
+                      </xs:attribute>
+                      <xs:attribute name="stop" type="Position">
+                        <xs:annotation>
+                          <xs:documentation>
+                            The ending position of the emphasis, including last
+                            character.
+                          </xs:documentation>
+                        </xs:annotation>
+                      </xs:attribute>
+                    </xs:complexType>
+                  </xs:element>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:element>
+          </xs:all>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
 
-	<xs:complexType name="SyntaxTree">
-		<xs:sequence>
-			<!-- ... -->
-			<xs:any minOccurs="0" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
+  <xs:simpleType name="Position">
+    <xs:annotation>
+      <xs:documentation>
+        Encodes the position of cursor in file. The first number is a line
+        number, the second number is a column number. The numbering starts with
+        one.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[1-9][0-9]*(, ?[1-9][0-9]*)?" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="Text" mixed="true">
+    <xs:annotation>
+      <xs:documentation>
+        The type for represent of readable text.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="primary" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            This tag contains a monospaced text. It can be type name or identifier.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Status">
+    <xs:attribute name="value" type="xs:token">
+      <xs:annotation>
+        <xs:documentation>
+          The status of compilation. TODO
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
 </xs:schema>
+<!-- vim: si et sts=2 sw=2 cc=80
+     -->
