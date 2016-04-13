@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           targetNamespace="https://gcc.gnu.org/diagnostics/2016"
-           xmlns="https://gcc.gnu.org/diagnostics/2016"
+           targetNamespace="https://gcc.gnu.org/diagnostics/0.1.1"
+           xmlns="https://gcc.gnu.org/diagnostics/0.1.1"
            elementFormDefault="qualified">
   <xs:annotation>
     <xs:documentation>
@@ -128,14 +128,37 @@
                 </xs:documentation>
               </xs:annotation>
             </xs:element>
+            <xs:element name="backtrace" type="Backtrace" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>
+                  If an internal error happened then this tag contains the
+                  backtrace.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
           </xs:all>
           <!-- Annoying that attributes must be below of elements list -->
-          <xs:attribute name="kind" type="xs:token" use="required">
-            <xs:annotation>
-              <xs:documentation>
-                Type of diagnostic.
-              </xs:documentation>
-            </xs:annotation>
+          <xs:attribute name="kind" use="required">
+            <xs:simpleType>
+              <xs:annotation>
+                <xs:documentation>
+                  Type of diagnostic.
+                </xs:documentation>
+              </xs:annotation>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="fatal error" />
+                <xs:enumeration value="internal error" />
+                <xs:enumeration value="error" />
+                <xs:enumeration value="unimplemented" />
+                <xs:enumeration value="warning" />
+                <xs:enumeration value="anachronism" />
+                <xs:enumeration value="note" />
+                <xs:enumeration value="debug" />
+                <xs:enumeration value="pedantic warning" />
+                <xs:enumeration value="pedantic error" />
+                <xs:enumeration value="warning as error" />
+              </xs:restriction>
+            </xs:simpleType>
           </xs:attribute>
         </xs:complexType>
       </xs:element>
@@ -216,7 +239,7 @@
         one.
       </xs:documentation>
     </xs:annotation>
-    <xs:restriction base="xs:string">
+    <xs:restriction base="xs:token">
       <xs:pattern value="[1-9][0-9]*(, ?[1-9][0-9]*)?" />
     </xs:restriction>
   </xs:simpleType>
@@ -239,13 +262,25 @@
   </xs:complexType>
 
   <xs:complexType name="Status">
-    <xs:attribute name="value" type="xs:token">
-      <xs:annotation>
-        <xs:documentation>
-          The status of compilation. TODO
-        </xs:documentation>
-      </xs:annotation>
+    <xs:attribute name="value">
+      <xs:simpleType>
+        <xs:annotation>
+          <xs:documentation>
+            The status of compilation. TODO
+          </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="success" />
+          <xs:enumeration value="errors" />
+          <xs:enumeration value="aborted" />
+          <xs:enumeration value="terminated" />
+        </xs:restriction>
+      </xs:simpleType>
     </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Backtrace">
+    <!-- ... -->
   </xs:complexType>
 </xs:schema>
 <!-- vim: si et sts=2 sw=2 cc=80
