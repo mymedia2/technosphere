@@ -1,6 +1,28 @@
+Index: gcc/Makefile.in
+===================================================================
+--- gcc/Makefile.in	(revision 235121)
++++ gcc/Makefile.in	(working copy)
+@@ -963,7 +963,7 @@
+ TREE_PRETTY_PRINT_H = tree-pretty-print.h $(PRETTY_PRINT_H)
+ GIMPLE_PRETTY_PRINT_H = gimple-pretty-print.h $(TREE_PRETTY_PRINT_H)
+ DIAGNOSTIC_CORE_H = diagnostic-core.h $(INPUT_H) bversion.h diagnostic.def
+-DIAGNOSTIC_H = diagnostic.h $(DIAGNOSTIC_CORE_H) $(PRETTY_PRINT_H)
++DIAGNOSTIC_H = diagnostic.h diagnostic-xml.h $(DIAGNOSTIC_CORE_H) $(PRETTY_PRINT_H)
+ C_PRETTY_PRINT_H = c-family/c-pretty-print.h $(PRETTY_PRINT_H) \
+ 	$(C_COMMON_H) $(TREE_H)
+ TREE_INLINE_H = tree-inline.h
+@@ -1540,7 +1540,7 @@
+ 
+ # Objects in libcommon.a, potentially used by all host binaries and with
+ # no target dependencies.
+-OBJS-libcommon = diagnostic.o diagnostic-color.o diagnostic-show-locus.o \
++OBJS-libcommon = diagnostic.o diagnostic-xml.o diagnostic-color.o diagnostic-show-locus.o \
+ 	pretty-print.o intl.o \
+ 	vec.o input.o version.o hash-table.o ggc-none.o memory-block.o
+ 
 Index: gcc/common.opt
 ===================================================================
---- gcc/common.opt	(revision 234707)
+--- gcc/common.opt	(revision 235121)
 +++ gcc/common.opt	(working copy)
 @@ -1180,6 +1180,24 @@
  Common Var(flag_diagnostics_show_option) Init(1)
@@ -29,24 +51,32 @@ Index: gcc/common.opt
  -fdisable-[tree|rtl|ipa]-<pass>=range1+range2 disables an optimization pass.
 Index: gcc/diagnostic.c
 ===================================================================
---- gcc/diagnostic.c	(revision 234707)
+--- gcc/diagnostic.c	(revision 235121)
 +++ gcc/diagnostic.c	(working copy)
-@@ -696,6 +696,12 @@
-   if (diagnostic->kind == DK_NOTE && context->inhibit_notes_p)
-     return false;
+@@ -31,6 +31,7 @@
+ #include "backtrace.h"
+ #include "diagnostic.h"
+ #include "diagnostic-color.h"
++#include "diagnostic-xml.h"
+ 
+ #ifdef HAVE_TERMIOS_H
+ # include <termios.h>
+@@ -772,6 +773,12 @@
+ 
+   context->lock++;
  
 +  // maybe insert our code here
 +  if (context->xml_output_format == DIAGNOSTICS_FORMAT_XML)
 +    {
-+      puts("Flag of XML diagnostics works!");
++	  output_xml_diagnositc (context, diagnostic);
 +    }
 +
-   if (context->lock > 0)
+   if (diagnostic->kind == DK_ICE || diagnostic->kind == DK_ICE_NOBT)
      {
-       /* If we're reporting an ICE in the middle of some other error,
+       /* When not checking, ICEs are converted to fatal errors when an
 Index: gcc/diagnostic.h
 ===================================================================
---- gcc/diagnostic.h	(revision 234707)
+--- gcc/diagnostic.h	(revision 235121)
 +++ gcc/diagnostic.h	(working copy)
 @@ -24,6 +24,15 @@
  #include "pretty-print.h"
@@ -76,7 +106,7 @@ Index: gcc/diagnostic.h
  static inline void
 Index: gcc/opts.c
 ===================================================================
---- gcc/opts.c	(revision 234707)
+--- gcc/opts.c	(revision 235121)
 +++ gcc/opts.c	(working copy)
 @@ -1865,6 +1865,10 @@
        diagnostic_color_init (dc, value);
@@ -89,3 +119,118 @@ Index: gcc/opts.c
      case OPT_fdiagnostics_show_option:
        dc->show_option_requested = value;
        break;
+Index: gcc/pretty-print.c
+===================================================================
+--- gcc/pretty-print.c	(revision 235121)
++++ gcc/pretty-print.c	(working copy)
+@@ -801,20 +801,29 @@
+     }
+ }
+ 
++base_printer::base_printer ()
++  : buffer (new (XCNEW (output_buffer)) output_buffer ()),
++    format_decoder (),
++    translate_identifiers (true)
++{
++}
++
++base_printer::~base_printer ()
++{
++}
++
+ /* Construct a PRETTY-PRINTER with PREFIX and of MAXIMUM_LENGTH
+    characters per line.  */
+ 
+ pretty_printer::pretty_printer (const char *p, int l)
+-  : buffer (new (XCNEW (output_buffer)) output_buffer ()),
++  : base_printer (),
+     prefix (),
+     padding (pp_none),
+     maximum_length (),
+     indent_skip (),
+     wrapping (),
+-    format_decoder (),
+     emitted_prefix (),
+     need_newline (),
+-    translate_identifiers (true),
+     show_color ()
+ {
+   pp_line_cutoff (this) = l;
+Index: gcc/pretty-print.h
+===================================================================
+--- gcc/pretty-print.h	(revision 235121)
++++ gcc/pretty-print.h	(working copy)
+@@ -202,10 +202,35 @@
+ /* True if colors should be shown.  */
+ #define pp_show_color(PP) (PP)->show_color
+ 
++struct base_printer
++{
++  explicit base_printer ();
++
++  virtual ~base_printer ();
++
++  /* Where we print external representation of ENTITY.  */
++  output_buffer *buffer;
++
++  /* If non-NULL, this function formats a TEXT into the BUFFER.  When called,
++     TEXT->format_spec points to a format code.  FORMAT_DECODER should call
++     pp_string (and related functions) to add data to the BUFFER.
++     FORMAT_DECODER can read arguments from *TEXT->args_pts using VA_ARG.
++     If the BUFFER needs additional characters from the format string, it
++     should advance the TEXT->format_spec as it goes.  When FORMAT_DECODER
++     returns, TEXT->format_spec should point to the last character processed.
++  */
++  printer_fn format_decoder;
++
++  /* Nonzero means identifiers are translated to the locale character
++     set on output.  */
++  bool translate_identifiers;
++};
++
+ /* The data structure that contains the bare minimum required to do
+    proper pretty-printing.  Clients may derived from this structure
+    and add additional fields they need.  */
+ struct pretty_printer
++  : base_printer
+ {
+   // Default construct a pretty printer with specified prefix
+   // and a maximum line length cut off limit.
+@@ -213,9 +238,6 @@
+ 
+   virtual ~pretty_printer ();
+ 
+-  /* Where we print external representation of ENTITY.  */
+-  output_buffer *buffer;
+-
+   /* The prefix for each new line.  */
+   const char *prefix;
+ 
+@@ -232,16 +254,6 @@
+   /* Current wrapping mode.  */
+   pp_wrapping_mode_t wrapping;
+ 
+-  /* If non-NULL, this function formats a TEXT into the BUFFER.  When called,
+-     TEXT->format_spec points to a format code.  FORMAT_DECODER should call
+-     pp_string (and related functions) to add data to the BUFFER.
+-     FORMAT_DECODER can read arguments from *TEXT->args_pts using VA_ARG.
+-     If the BUFFER needs additional characters from the format string, it
+-     should advance the TEXT->format_spec as it goes.  When FORMAT_DECODER
+-     returns, TEXT->format_spec should point to the last character processed.
+-  */
+-  printer_fn format_decoder;
+-
+   /* Nonzero if current PREFIX was emitted at least once.  */
+   bool emitted_prefix;
+ 
+@@ -248,10 +260,6 @@
+   /* Nonzero means one should emit a newline before outputting anything.  */
+   bool need_newline;
+ 
+-  /* Nonzero means identifiers are translated to the locale character
+-     set on output.  */
+-  bool translate_identifiers;
+-
+   /* Nonzero means that text should be colorized.  */
+   bool show_color;
+ };
