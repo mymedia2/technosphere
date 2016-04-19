@@ -61,19 +61,54 @@ Index: gcc/diagnostic.c
  
  #ifdef HAVE_TERMIOS_H
  # include <termios.h>
-@@ -772,6 +773,12 @@
+@@ -572,7 +573,9 @@
+ default_diagnostic_finalizer (diagnostic_context *context,
+ 			      diagnostic_info *diagnostic)
+ {
+-  diagnostic_show_locus (context, diagnostic);
++  pp_newline (context->printer);
++  if (context->xml_output_format)
++	diagnostic_show_locus (context, diagnostic);
+   pp_destroy_prefix (context->printer);
+   pp_flush (context->printer);
+ }
+@@ -770,6 +773,17 @@
+ 	return false;
+     }
  
-   context->lock++;
- 
++  if (diagnostic->kind == DK_ERROR && orig_diag_kind == DK_WARNING)
++    ++diagnostic_kind_count (context, DK_WERROR);
++  else
++    ++diagnostic_kind_count (context, diagnostic->kind);
++
 +  // maybe insert our code here
 +  if (context->xml_output_format == DIAGNOSTICS_FORMAT_XML)
 +    {
-+	  output_xml_diagnositc (context, diagnostic);
++	  return output_xml_diagnositc (context, diagnostic);
 +    }
 +
+   context->lock++;
+ 
    if (diagnostic->kind == DK_ICE || diagnostic->kind == DK_ICE_NOBT)
-     {
-       /* When not checking, ICEs are converted to fatal errors when an
+@@ -793,10 +807,6 @@
+ 				    diagnostic->message.format_spec,
+ 				    diagnostic->message.args_ptr);
+     }
+-  if (diagnostic->kind == DK_ERROR && orig_diag_kind == DK_WARNING)
+-    ++diagnostic_kind_count (context, DK_WERROR);
+-  else
+-    ++diagnostic_kind_count (context, diagnostic->kind);
+ 
+   saved_format_spec = diagnostic->message.format_spec;
+   if (context->show_option_requested)
+@@ -911,6 +921,7 @@
+   pp_output_formatted_text (context->printer);
+   pp_destroy_prefix (context->printer);
+   pp_set_prefix (context->printer, saved_prefix);
++  /* TODO */
+   diagnostic_show_locus (context, &diagnostic);
+   va_end (ap);
+ }
 Index: gcc/diagnostic.h
 ===================================================================
 --- gcc/diagnostic.h	(revision 235121)
@@ -119,118 +154,43 @@ Index: gcc/opts.c
      case OPT_fdiagnostics_show_option:
        dc->show_option_requested = value;
        break;
-Index: gcc/pretty-print.c
+Index: gcc/c-family/c-opts.c
 ===================================================================
---- gcc/pretty-print.c	(revision 235121)
-+++ gcc/pretty-print.c	(working copy)
-@@ -801,20 +801,29 @@
-     }
- }
- 
-+base_printer::base_printer ()
-+  : buffer (new (XCNEW (output_buffer)) output_buffer ()),
-+    format_decoder (),
-+    translate_identifiers (true)
-+{
-+}
-+
-+base_printer::~base_printer ()
-+{
-+}
-+
- /* Construct a PRETTY-PRINTER with PREFIX and of MAXIMUM_LENGTH
-    characters per line.  */
- 
- pretty_printer::pretty_printer (const char *p, int l)
--  : buffer (new (XCNEW (output_buffer)) output_buffer ()),
-+  : base_printer (),
-     prefix (),
-     padding (pp_none),
-     maximum_length (),
-     indent_skip (),
-     wrapping (),
--    format_decoder (),
-     emitted_prefix (),
-     need_newline (),
--    translate_identifiers (true),
-     show_color ()
+--- gcc/c-family/c-opts.c	(revision 235121)
++++ gcc/c-family/c-opts.c	(working copy)
+@@ -164,7 +164,9 @@
+ c_diagnostic_finalizer (diagnostic_context *context,
+ 			diagnostic_info *diagnostic)
  {
-   pp_line_cutoff (this) = l;
-Index: gcc/pretty-print.h
+-  diagnostic_show_locus (context, diagnostic);
++  pp_newline (context->printer);
++  if (!context->xml_output_format)
++    diagnostic_show_locus (context, diagnostic);
+   /* By default print macro expansion contexts in the diagnostic
+      finalizer -- for tokens resulting from macro expansion.  */
+   virt_loc_aware_diagnostic_finalizer (context, diagnostic);
+Index: gcc/diagnostic-show-locus.c
 ===================================================================
---- gcc/pretty-print.h	(revision 235121)
-+++ gcc/pretty-print.h	(working copy)
-@@ -202,10 +202,35 @@
- /* True if colors should be shown.  */
- #define pp_show_color(PP) (PP)->show_color
- 
-+struct base_printer
-+{
-+  explicit base_printer ();
-+
-+  virtual ~base_printer ();
-+
-+  /* Where we print external representation of ENTITY.  */
-+  output_buffer *buffer;
-+
-+  /* If non-NULL, this function formats a TEXT into the BUFFER.  When called,
-+     TEXT->format_spec points to a format code.  FORMAT_DECODER should call
-+     pp_string (and related functions) to add data to the BUFFER.
-+     FORMAT_DECODER can read arguments from *TEXT->args_pts using VA_ARG.
-+     If the BUFFER needs additional characters from the format string, it
-+     should advance the TEXT->format_spec as it goes.  When FORMAT_DECODER
-+     returns, TEXT->format_spec should point to the last character processed.
-+  */
-+  printer_fn format_decoder;
-+
-+  /* Nonzero means identifiers are translated to the locale character
-+     set on output.  */
-+  bool translate_identifiers;
-+};
-+
- /* The data structure that contains the bare minimum required to do
-    proper pretty-printing.  Clients may derived from this structure
-    and add additional fields they need.  */
- struct pretty_printer
-+  : base_printer
+--- gcc/diagnostic-show-locus.c	(revision 235121)
++++ gcc/diagnostic-show-locus.c	(working copy)
+@@ -1093,8 +1093,6 @@
+ diagnostic_show_locus (diagnostic_context * context,
+ 		       const diagnostic_info *diagnostic)
  {
-   // Default construct a pretty printer with specified prefix
-   // and a maximum line length cut off limit.
-@@ -213,9 +238,6 @@
- 
-   virtual ~pretty_printer ();
- 
--  /* Where we print external representation of ENTITY.  */
--  output_buffer *buffer;
+-  pp_newline (context->printer);
 -
-   /* The prefix for each new line.  */
-   const char *prefix;
- 
-@@ -232,16 +254,6 @@
-   /* Current wrapping mode.  */
-   pp_wrapping_mode_t wrapping;
- 
--  /* If non-NULL, this function formats a TEXT into the BUFFER.  When called,
--     TEXT->format_spec points to a format code.  FORMAT_DECODER should call
--     pp_string (and related functions) to add data to the BUFFER.
--     FORMAT_DECODER can read arguments from *TEXT->args_pts using VA_ARG.
--     If the BUFFER needs additional characters from the format string, it
--     should advance the TEXT->format_spec as it goes.  When FORMAT_DECODER
--     returns, TEXT->format_spec should point to the last character processed.
--  */
--  printer_fn format_decoder;
--
-   /* Nonzero if current PREFIX was emitted at least once.  */
-   bool emitted_prefix;
- 
-@@ -248,10 +260,6 @@
-   /* Nonzero means one should emit a newline before outputting anything.  */
-   bool need_newline;
- 
--  /* Nonzero means identifiers are translated to the locale character
--     set on output.  */
--  bool translate_identifiers;
--
-   /* Nonzero means that text should be colorized.  */
-   bool show_color;
- };
+   if (!context->show_caret
+       || diagnostic_location (diagnostic, 0) <= BUILTINS_LOCATION
+       || diagnostic_location (diagnostic, 0) == context->last_location)
+Index: gcc/fortran/error.c
+===================================================================
+--- gcc/fortran/error.c	(revision 235121)
++++ gcc/fortran/error.c	(working copy)
+@@ -1093,6 +1093,7 @@
+     {
+       pp_verbatim (context->printer, locus_prefix);
+       free (locus_prefix);
++      pp_newline (context->printer);
+       /* Fortran uses an empty line between locus and caret line.  */
+       pp_newline (context->printer);
+       diagnostic_show_locus (context, diagnostic);
